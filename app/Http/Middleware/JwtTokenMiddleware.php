@@ -11,7 +11,6 @@ use Lcobucci\JWT\ValidationData;
 use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 
-
 class JwtTokenMiddleware
 {
     /**

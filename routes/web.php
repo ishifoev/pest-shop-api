@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\AdminController;
 
 /*
@@ -38,6 +37,3 @@ Route::prefix('api/v1')->middleware(['jwt.token'])->group(function () {
     // Delete user account by UUID
     Route::delete('admin/user-delete/{uuid}', [AdminController::class, 'deleteUser']);
 });
-
-
-

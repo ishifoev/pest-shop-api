@@ -11,7 +11,9 @@ use Ramsey\Uuid\Uuid;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -54,12 +56,12 @@ class User extends Authenticatable
     ];
 
      // Generate a UUID for the user
-     public static function boot()
-     {
-         parent::boot();
- 
-         static::creating(function ($user) {
-             $user->uuid = Uuid::uuid4()->toString();
-         });
-     }
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            $user->uuid = Uuid::uuid4()->toString();
+        });
+    }
 }
