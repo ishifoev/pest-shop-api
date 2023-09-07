@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Ramsey\Uuid\Uuid;
 
 class User extends Authenticatable
 {
@@ -18,9 +19,18 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
+        "name",
+        'uuid',
+        'first_name',
+        'last_name',
+        'is_admin',
         'email',
+        'email_verified_at',
         'password',
+        'avatar',
+        'address',
+        'phone_number',
+        'is_marketing',
     ];
 
     /**
@@ -42,4 +52,14 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+     // Generate a UUID for the user
+     public static function boot()
+     {
+         parent::boot();
+ 
+         static::creating(function ($user) {
+             $user->uuid = Uuid::uuid4()->toString();
+         });
+     }
 }
