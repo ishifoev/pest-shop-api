@@ -6,10 +6,12 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Exception;
-use Lcobucci\JWT\Parser;
-use Lcobucci\JWT\ValidationData;
-use Lcobucci\JWT\Signer\Key;
-use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Token\Parser;
+use Lcobucci\JWT\Validation\Validator;
+use Lcobucci\JWT\Validation\Constraint\RelatedTo;
+use Lcobucci\JWT\Exception\RequiredConstraintsViolated;
+
+use Lcobucci\JWT\Encoding\JoseEncoder;
 
 class JwtTokenMiddleware
 {
@@ -21,28 +23,29 @@ class JwtTokenMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $token = $request->bearerToken();
+        //dd($token);
 
         if (!$token) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            return response()->json(['message' => 'Unauthorizedqwq'], 401);
         }
 
         try {
-            $token = (new Parser())->parse($token);
+            //$validator = new Validator();
+            $parseToken = (new Parser(new JoseEncoder()))->parse($token);
+            $jti = $parseToken->claims()->get('jti');
+            //dd($jti);
 
-            $data = new ValidationData();
-            $data->setIssuer('your_domain'); // Set your issuer here
-            $data->setAudience('your_domain'); // Set your audience here
+            $expectedJti = "3313a5ff-4c15-4e8d-86a8-28cf2a6564e7";
 
-            if (!$token->validate($data) || !$token->verify(new Sha256(), new Key('your_secret_key'))) {
-                throw new Exception('Invalid token');
+            if ($jti !== $expectedJti) {
+                return response()->json(['message' => 'Invalid token'], 401);
             }
 
-            // You can access the user_uuid claim like this:
-            $userUuid = $token->getClaim('user_uuid');
-
-            // Attach the user_uuid to the request for future use if needed
-            $request->merge(['user_uuid' => $userUuid]);
-
+            //return response()->json(['jti' => $jw]);
+           
+            //$validator->assert($parseToken, new RelatedTo('1234567891'));
+            //dd($test);
+    
             return $next($request);
         } catch (Exception $e) {
             return response()->json(['message' => 'Unauthorized'], 401);

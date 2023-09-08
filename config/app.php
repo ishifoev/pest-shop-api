@@ -59,6 +59,9 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'private_key' => env('PRIVATE_KEY'),
+    'public_key' => env('PUBLIC_KEY'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
@@ -124,7 +127,6 @@ return [
 
     'key' => env('APP_KEY'),
 
-    'jwt_secret' => env('JWT_SECRET'),
 
     'cipher' => 'AES-256-CBC',
 

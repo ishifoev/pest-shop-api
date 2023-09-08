@@ -200,6 +200,7 @@ return [
                 */
             ],
             'security' => [
+                'bearerAuth' => [],
                 /*
                  * Examples of Securities
                 */

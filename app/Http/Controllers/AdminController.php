@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Http\Requests\AdminCreateRequest; // Import the new request class
+use App\Http\Requests\AdminCreateRequest;
 use App\Models\User;
-use Ramsey\Uuid\Uuid;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Str;
+use App\Services\TokenService;
 
 /**
  * @OA\Info(
@@ -21,7 +24,7 @@ use Illuminate\Support\Facades\Hash;
  */
 class AdminController extends Controller
 {
-    /**
+     /**
      * @OA\Post(
      *     path="/api/v1/admin/create",
      *     summary="Create a new admin account",
@@ -52,35 +55,93 @@ class AdminController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="errors", type="object")
      *         )
-     *     )
+     *     ),
+     *     @OA\SecurityScheme(
+     *         securityScheme="bearerAuth",
+     *         in="header",
+     *         name="Authorization",
+     *         type="http",
+     *         scheme="bearer",
+     *         bearerFormat="JWT",
+     *     ),
+     *     security={{"bearerAuth": {}}}
      * )
      */
-
      // Create a new admin account
     public function create(AdminCreateRequest $request)
     {
-        // Create a new admin user
-        $admin = new User();
-        $admin->uuid = Uuid::uuid4()->toString();
-        $admin->name = $request->input('name');
-        $admin->first_name = $request->input('first_name');
-        $admin->last_name = $request->input('last_name');
-        $admin->address = $request->input('address');
-        $admin->phone_number = $request->input('phone_number');
-        $admin->email = $request->input('email');
-        $admin->password = Hash::make($request->input('password'));
-        $admin->is_admin = true;
+        $admin = new User([
+            'uuid' => Str::uuid(),
+            'name' => $request->input('name'),
+            'first_name' => $request->input('first_name'),
+            'last_name' => $request->input('last_name'),
+            'address' => $request->input('address'),
+            'phone_number' => $request->input('phone_number'),
+            'email' => $request->input('email'),
+            'password' => Hash::make($request->input('password')),
+            'is_admin' => true,
+        ]);
+    
         $admin->save();
+        // Generate a JWT token for the new admin
+        $userUuid = $admin->uuid;
 
-        return response()->json(['message' => 'Admin created successfully']);
+       
+        $token = TokenService::generateToken($userUuid);
+
+        return response()->json(['token' => $token, 'message' => 'Admin registered successfully']);
     }
 
-        // Admin login
+    /**
+     * @OA\Post(
+     *     path="/api/v1/admin/login",
+     *     summary="Admin Login",
+     *     tags={"Admin"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="email", type="string", example="admin@example.com"),
+     *             @OA\Property(property="password", type="string", example="adminpassword"),
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="token", type="string", example="your_jwt_token_here")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Invalid email or password")
+     *         )
+     *     )
+     * )
+     */
     public function login(Request $request)
     {
-        // Implement admin login logic here and generate a JWT token
-    }
+        // Validate the incoming request data (e.g., email, password, etc.)
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
+        // Check if the provided credentials match an admin account
+        if (Auth::attempt(['email' => $request->input('email'), 'password' => $request->input('password'), 'is_admin' => true])) {
+            // Generate and return a JWT token
+            $userUuid = Uuid::uuid4()->toString();
+
+            $token = TokenService::generateToken($userUuid);
+
+            return response()->json(['token' => (string) $token]);
+        } else {
+            // Return a validation error response
+            return response()->json(['message' => 'Invalid email or password'], 422);
+        }
+    }
         // Admin logout
     public function logout(Request $request)
     {
